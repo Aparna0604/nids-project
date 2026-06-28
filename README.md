@@ -1,45 +1,104 @@
 # AI-Powered Network Intrusion Detection System (NIDS)
 
-A machine learning-based network intrusion detection system that classifies network traffic as normal or malicious in real time using a Random Forest classifier trained on the NSL-KDD dataset.
+A machine learning-based system that classifies network traffic as **normal or malicious in real time**, using a Random Forest classifier trained on the NSL-KDD dataset with a live Streamlit dashboard.
 
-## Features
-- Random Forest classifier trained on 125,973 NSL-KDD connection records
-- Real-time packet capture using Scapy
-- Live classification dashboard built with Streamlit
-- Rigorous evaluation on both train-split and official KDDTest+ benchmark
+> Built by Aparna Kumari · BTech CSE, Vishwakarma University
+
+---
+
+## Demo
+
+<!-- Add your Streamlit dashboard screenshot here -->
+![NIDS Dashboard](screenshot.png)
+
+---
 
 ## Results
 
 | Evaluation | Accuracy | Attack Precision | Attack Recall |
-|------------|----------|-----------------|---------------|
+|---|---|---|---|
 | Train-split (80/20) | 99.92% | 1.00 | 1.00 |
 | Official KDDTest+ benchmark | 77.99% | 0.97 | 0.64 |
 
-The drop from train-split to KDDTest+ is expected and consistent with published NSL-KDD research. KDDTest+ contains novel attack patterns not present in the training set, making it a more realistic measure of generalization.
+The gap between train-split and KDDTest+ is expected — KDDTest+ contains novel attack patterns unseen during training, making it a realistic measure of generalization. This result is consistent with published NSL-KDD research.
+
+---
 
 ## Architecture
-## Dataset
-NSL-KDD dataset — an improved version of the KDD Cup 1999 dataset, widely used in network intrusion detection research.
-- Training: 125,973 records, 41 features, 22 attack types
-- Test: 22,544 records (KDDTest+), includes novel attack types unseen in training
 
-Download: https://github.com/Mamcose/NSL-KDD-Network-Intrusion-Detection
-
-## Setup
-
-```bash
-pip install pandas scikit-learn scapy streamlit matplotlib seaborn joblib
+```
+Raw Packets (Scapy)
+       │
+       ▼
+Feature Extraction (9/41 NSL-KDD features approximated from packet headers)
+       │
+       ▼
+Preprocessed Feature Vector (41 features, missing → training-set means)
+       │
+       ▼
+Random Forest Classifier (trained on 125,973 NSL-KDD records)
+       │
+       ▼
+Prediction: Normal / Attack
+       │
+       ▼
+Streamlit Dashboard (real-time visualization)
 ```
 
-For live packet capture on Windows, install Npcap: https://npcap.com/#download
+---
 
-## Usage
+## Dataset
+
+**NSL-KDD** — an improved version of KDD Cup 1999, widely used in intrusion detection research.
+
+- Training set: 125,973 records · 41 features · 22 attack types
+- Test set (KDDTest+): 22,544 records · includes novel attack types unseen in training
+
+Source: [NSL-KDD on GitHub](https://github.com/Mamcose/NSL-KDD-Network-Intrusion-Detection)
+
+---
+
+## Tech Stack
+
+| Layer | Tools |
+|---|---|
+| ML Model | scikit-learn (Random Forest) |
+| Data Processing | pandas, NumPy |
+| Live Packet Capture | Scapy |
+| Dashboard | Streamlit |
+| Visualization | Matplotlib, Seaborn |
+| Model Persistence | joblib |
+
+---
+
+## Project Structure
+
+```
+nids-project/
+├── explore_data.py       # EDA on NSL-KDD dataset
+├── preprocess_data.py    # Feature engineering and cleaning
+├── train_model.py        # Model training and saving
+├── evaluate.py           # Benchmark evaluation on KDDTest+
+├── live_detect.py        # Real-time packet capture and classification
+├── dashboard.py          # Streamlit live monitoring dashboard
+└── requirements.txt
+```
+
+---
+
+## Setup & Usage
+
+```bash
+pip install -r requirements.txt
+```
+
+> For live packet capture on Windows, install [Npcap](https://npcap.com/#download)
 
 ```bash
 # Step 1: Explore the dataset
 python explore_data.py
 
-# Step 2: Preprocess and clean data
+# Step 2: Preprocess data
 python preprocess_data.py
 
 # Step 3: Train the model
@@ -55,14 +114,16 @@ python live_detect.py
 streamlit run dashboard.py
 ```
 
-## Limitations and Future Work
-- Live packet capture approximates 9 of 41 NSL-KDD features from raw packets; features requiring full flow-state tracking (same_srv_rate, dst_host_srv_count, etc.) are defaulted to training-set means — a known train/serve skew tradeoff
-- Binary classification (normal vs attack); multi-class detection of specific attack types is a natural extension
-- Future improvement: replace raw packet sniffing with NetFlow/IPFIX for proper connection-level feature extraction
-- KDDTest+ recall on attacks is 0.64, meaning some novel attack patterns are missed — expected given the dataset shift
+---
 
-## Tech Stack
-Python, scikit-learn, pandas, Scapy, Streamlit, NumPy, joblib
+## Known Limitations & Design Decisions
 
-## Author
-Aparna — BTech CSE, third year
+- **9 of 41 features approximated**: Live packet capture via Scapy provides access to packet-level headers only. Features requiring full connection-state tracking (e.g. `same_srv_rate`, `dst_host_srv_count`) are defaulted to training-set means — a known train/serve skew, documented intentionally.
+- **Binary classification**: Current model detects normal vs. attack. Multi-class detection of specific attack types (DoS, Probe, R2L, U2R) is a natural extension.
+- **Future improvement**: Replace raw Scapy sniffing with NetFlow/IPFIX for proper connection-level feature extraction, which would allow all 41 features to be computed accurately.
+
+---
+
+## License
+
+MIT
